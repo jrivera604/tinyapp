@@ -10,6 +10,14 @@ const urlDatabase = {
 };
 
 
+const generateRandomString = () => {
+  let shortUrl = [];
+  let characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+  for (let i = 0; i <=5; i++) {
+    shortUrl.push(characters.charAt(Math.floor(Math.random()* characters.length)));
+  }
+  return shortUrl.join('');
+}
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -30,7 +38,7 @@ app.listen(PORT, () => {
 app.post("/urls", (req, res) => {
   console.log(req.body); // Log the POST request body to the console
   let id= generateRandomString();
-  urlDatabase[id] = {longURL: req.body.longURL}
+  urlDatabase[id] = req.body.longURL
   res.redirect(`/urls/${id}`)
 
 });
@@ -54,9 +62,14 @@ app.get("/urls/:id", (req, res) => {
 
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id]
-  res.redirect(longURL).full;
+  res.redirect(longURL)
 });
 
+
+app.post("/urls/:id", (req, res) => {
+  urlDatabase[req.params.id] = req.body.longURL
+  res.redirect("/urls");
+});
 
 app.post("/urls/:id/delete", (req, res) => {
   delete urlDatabase[req.params.id]
@@ -67,11 +80,4 @@ app.post("/urls/:id/delete", (req, res) => {
 
 
 
-const generateRandomString = () => {
-  let shortUrl = [];
-  let characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-  for (let i = 0; i <=5; i++) {
-    shortUrl.push(characters.charAt(Math.floor(Math.random()* characters.length)));
-  }
-  return shortUrl.join('');
-}
+
