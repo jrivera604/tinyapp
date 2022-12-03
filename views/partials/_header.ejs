@@ -23,7 +23,7 @@
       </div>
     </div>
     <p>
-      <%if (!username) {%>
+      <%if (!user) {%>
      
       <form method="POST" action="/login" class="form-inline">
       <input
@@ -36,7 +36,7 @@
     <% } else  {%>
       
       <form method="POST" action="/logout" class="form-inline">
-        <label>Logged in as: <%= username %> </label>
+        <label>Logged in as: <%= user.email %> </label>
         <div class ="form-group"> 
           <button class="btn btn-primary " > Logout </button> 
           </div>
