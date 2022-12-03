@@ -24,6 +24,11 @@ const users = {
   },
 };
 
+const getUserByEmail = (email) => {
+  let emailArray = Object.values(users);
+  //callback function to return truthy value for email
+  return emailArray.find(user => email === user.email)
+}
 const generateRandomString = () => {
   let shortUrl = [];
   let characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -73,9 +78,23 @@ app.get("/register", (req, res) => {
 
 app.post("/register", (req, res) => {
   let id = generateRandomString();
-  users[id] = {id: id, email: req.body.email, password: req.body.password};
+  const email = req.body.email;
+  const password = req.body.password;
+  if(email.length === 0 || password.length === 0){
+    res.status(400).send("Invalid email and/or password");
+    return;
+  }
+  else if (getUserByEmail(email)) {
+    res.status(400).send("Email already exists");
+    return;
+  }
+
+  else {
+  
+  users[id] = {id: id, email: email, password: password};
   res.cookie("user_id", id);
   res.redirect("/urls");
+  }
 });
 //shortURL route
 app.post("/urls", (req, res) => {
