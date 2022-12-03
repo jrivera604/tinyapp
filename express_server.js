@@ -57,12 +57,11 @@ app.listen(PORT, () => {
 
 
 app.get("/login", (req, res) => {
-  const templateVars = {user: undefined};
-  res.render("login", templateVars);
+  res.render("login");
 });
 //post login route
 app.post("/login" , (req, res) => {
-  res.cookie("username", req.body.username);
+  res.cookie("user_id", req.body.username);
   res.redirect("/urls");
 });
 //post logout route
