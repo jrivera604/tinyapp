@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 const cookieSession = require("cookie-session");
-const {getUserByEmail} = require("./helpers")
+const {getUserByEmail} = require("./helpers");
 const bcrypt = require("bcryptjs");
 const morgan = require("morgan");
 app.set("view engine", "ejs");
@@ -184,8 +184,10 @@ app.get("/urls/:id", (req, res) => {
   if (!urlsForUser(req.session.user_id)[req.params.id]) {
     res.status(406).send("This url is invalid. Please go back!");
   }
-  let urls = urlsForUser(req.session.user_id);
-  const templateVars = { longURL: urls, user: user};
+ 
+  let url = urlDatabase[req.params.id];
+  let longURL = url.longURL;
+  const templateVars = { longURL: longURL, id: req.params.id, user: user};
   res.render("urls_show", templateVars);
 });
 
@@ -205,7 +207,7 @@ app.post("/urls/:id", (req, res) => {
     res.redirect("/login");
   }
   
-  const longURL = urlDatabase[req.params.id];
+  let longURL = urlDatabase[req.params.id];
   longURL.longURL = req.body.longURL;
   res.redirect("/urls");
 });
