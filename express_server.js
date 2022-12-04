@@ -38,6 +38,19 @@ const generateRandomString = () => {
   return shortUrl.join('');
 };
 
+
+const loginCheck = (req, res) => {
+  let user = users[req.cookies['user_id']]
+  if(!user){
+    res.redirect("/login");
+    
+  };
+  return true;
+};
+
+
+
+
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
@@ -57,7 +70,7 @@ app.listen(PORT, () => {
 //login page route
 app.get("/login", (req, res) => {
   let  user = users[req.cookies["user_id"]];
-  const templateVars = { id: req.params.id, longURL: urlDatabase, user: user};
+  const templateVars = {longURL: urlDatabase, user: user};
   res.render("login", templateVars);
 });
 
@@ -78,7 +91,7 @@ app.post("/login" , (req, res) => {
 //post logout route
 app.post("/logout", (req, res) => {
   res.clearCookie("user_id");
-  res.redirect("/urls");
+  res.redirect("/login");
 });
 
 //register route
@@ -117,12 +130,18 @@ app.post("/urls", (req, res) => {
 
 
 app.get("/urls", (req, res) => {
+  if(!loginCheck(req, res)){
+    res.redirect("/login")
+  };
   let user = users[req.cookies["user_id"]];
-  const templateVars = { id: req.params.id, urls: urlDatabase, user: user};
+  const templateVars = { id: req.params.id, longURL: urlDatabase, user: user};
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
+  if(!loginCheck(req, res)){
+    res.redirect("/login")
+  };
   let user = users[req.cookies["user_id"]];
   const templateVars = {user: user};
   res.render("urls_new", templateVars);
@@ -130,6 +149,9 @@ app.get("/urls/new", (req, res) => {
 
 
 app.get("/urls/:id", (req, res) => {
+  if(!loginCheck(req, res)){
+    res.redirect("/login")
+  };
   let user = users[req.cookies["user_id"]];
   const templateVars = { id: req.params.id, longURL: urlDatabase, user: user};
   console.log(templateVars);
@@ -137,8 +159,13 @@ app.get("/urls/:id", (req, res) => {
 });
 
 app.get("/u/:id", (req, res) => {
+
   const longURL = urlDatabase[req.params.id];
+  if (longURL  === undefined) {
+    res.status(404).send("no short url")
+  };
   res.redirect(longURL);
+
 });
 
 
