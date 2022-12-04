@@ -1,12 +1,16 @@
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
-const cookieParser = require("cookie-parser");
+const cookieSession = require("cookie-session");
 const bcrypt = require("bcryptjs");
 const morgan = require("morgan");
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
+app.use(cookieSession({
+  name: "session",
+  keys: ["user_id"],
+  maxAge: 24 * 60 * 60 * 1000 //24 hours
+}));
 app.use(morgan("dev"));
 
 
@@ -51,7 +55,7 @@ const generateRandomString = () => {
 
 
 const loginCheck = (req, res) => {
-  let user = users[req.cookies['user_id']];
+  let user = users[req.session.user_id];
   if (!user) {
     res.redirect("/login");
     
@@ -91,7 +95,7 @@ app.listen(PORT, () => {
 
 //login page route
 app.get("/login", (req, res) => {
-  let  user = users[req.cookies["user_id"]];
+  let  user = users[req.session.user_id];
   const templateVars = {user: user};
   res.render("login", templateVars);
 });
@@ -106,19 +110,19 @@ app.post("/login" , (req, res) => {
   }
   
   const userID = getUserByEmail(email).id;
-  res.cookie("user_id", userID);
+  req.session.user_id = userID;
   res.redirect("/urls");
 });
 
 //post logout route
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");
+  req.session = null;
   res.redirect("/login");
 });
 
 //register route
 app.get("/register", (req, res) => {
-  let user = users[req.cookies["user_id"]];
+  let user = users[req.session.user_id];
   const templateVars =  {id: req.params.id, longURL: urlDatabase[req.params.id], user: user};
   res.render("register", templateVars);
 });
@@ -138,7 +142,7 @@ app.post("/register", (req, res) => {
   } else {
   
     users[id] = {id: id, email: email, password: hashedPassword};
-    res.cookie("user_id", id);
+    req.session.user_id = id;
     res.redirect("/urls");
   }
 });
@@ -149,7 +153,7 @@ app.post("/urls", (req, res) => {
   }
   console.log(req.body); // Log the POST request body to the console
   let id = generateRandomString();
-  urlDatabase[id] = {longURL: req.body.longURL, userID: req.cookies["user_id"]};
+  urlDatabase[id] = {longURL: req.body.longURL, userID: req.session.user_id};
   res.redirect(`/urls/${id}`);
 
 });
@@ -159,8 +163,8 @@ app.get("/urls", (req, res) => {
   if (!loginCheck(req, res)) {
     res.redirect("/login");
   }
-  let user = users[req.cookies["user_id"]];
-  let urls = urlsForUser(req.cookies["user_id"]);
+  let user = users[req.session.user_id];
+  let urls = urlsForUser(req.session.user_id);
   const templateVars = { longURL: urls, user: user};
   res.render("urls_index", templateVars);
 });
@@ -169,7 +173,7 @@ app.get("/urls/new", (req, res) => {
   if (!loginCheck(req, res)) {
     res.redirect("/login");
   }
-  let user = users[req.cookies["user_id"]];
+  let user = users[req.session.user_id];
   const templateVars = {user: user};
   res.render("urls_new", templateVars);
 });
@@ -179,11 +183,11 @@ app.get("/urls/:id", (req, res) => {
   if (!loginCheck(req, res)) {
     res.redirect("/login");
   }
-  let user = users[req.cookies["user_id"]];
-  if (!urlsForUser(req.cookies["user_id"])[req.params.id]) {
-    res.status(406).send("This url is invalid. please go back!");
+  let user = users[req.session.user_id];
+  if (!urlsForUser(req.session.user_id)[req.params.id]) {
+    res.status(406).send("This url is invalid. Please go back!");
   }
-  let urls = urlsForUser(req.cookies["user_id"]);
+  let urls = urlsForUser(req.session.user_id);
   const templateVars = { longURL: urls, user: user};
   res.render("urls_show", templateVars);
 });
@@ -213,8 +217,8 @@ app.post("/urls/:id/delete", (req, res) => {
   if (!loginCheck(req, res)) {
     res.redirect("/login");
   }
-  if (!urlsForUser(req.cookies["user_id"])[req.params.id]) {
-    res.status(406).send("Cannot Delete. This url is invalid. please go back!");
+  if (!urlsForUser(req.session.user_id)[req.params.id]) {
+    res.status(406).send("Cannot Delete. This url is invalid. Please go back!");
   }
   delete urlDatabase[req.params.id];
   res.redirect("/urls");
@@ -224,8 +228,8 @@ app.get("/urls/:id/delete", (req, res) => {
   if (!loginCheck(req, res)) {
     res.status(407).send("Cannot Delete. Please log in");
   }
-  if (!urlsForUser(req.cookies["user_id"])[req.params.id]) {
-    res.status(406).send("Cannot Delete. This url is invalid. please go back!");
+  if (!urlsForUser(req.session.user_id)[req.params.id]) {
+    res.status(406).send("Cannot Delete. This url is invalid. Please go back!");
   }
 
   delete urlDatabase[req.params.id];
