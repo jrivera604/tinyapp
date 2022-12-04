@@ -75,16 +75,17 @@ const urlsForUser = (userID) => {
 
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  if (!loginCheck(req, res)) {
+    res.redirect("/login");
+  }
+  res.redirect("/urls");
 });
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
-});
+
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
@@ -148,6 +149,7 @@ app.post("/urls", (req, res) => {
   if (!loginCheck(req, res)) {
     res.redirect("/login");
   }
+
   console.log(req.body); // Log the POST request body to the console
   let id = generateRandomString();
   urlDatabase[id] = {longURL: req.body.longURL, userID: req.session.user_id};
@@ -160,6 +162,7 @@ app.get("/urls", (req, res) => {
   if (!loginCheck(req, res)) {
     res.redirect("/login");
   }
+
   let user = users[req.session.user_id];
   let urls = urlsForUser(req.session.user_id);
   const templateVars = { longURL: urls, user: user};
