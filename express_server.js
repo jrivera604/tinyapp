@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 const cookieSession = require("cookie-session");
+const {getUserByEmail} = require("./helpers")
 const bcrypt = require("bcryptjs");
 const morgan = require("morgan");
 app.set("view engine", "ejs");
@@ -39,11 +40,7 @@ const users = {
   },
 };
 
-const getUserByEmail = (email) => {
-  let emailArray = Object.values(users);
-  //callback function to return truthy value for email
-  return emailArray.find(user => email === user.email);
-};
+
 const generateRandomString = () => {
   let shortUrl = [];
   let characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -104,12 +101,12 @@ app.get("/login", (req, res) => {
 app.post("/login" , (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  if (!getUserByEmail(email) || !bcrypt.compareSync(password, getUserByEmail(email).password)) {
+  if (!getUserByEmail(email, users) || !bcrypt.compareSync(password, getUserByEmail(email, users).password)) {
     res.status(403).send("Invalid email and/or password");
     return;
   }
   
-  const userID = getUserByEmail(email).id;
+  const userID = getUserByEmail(email, users).id;
   req.session.user_id = userID;
   res.redirect("/urls");
 });
@@ -136,7 +133,7 @@ app.post("/register", (req, res) => {
   if (email.length === 0 || password.length === 0) {
     res.status(400).send("Invalid email and/or password");
     return;
-  } else if (getUserByEmail(email)) {
+  } else if (getUserByEmail(email, users)) {
     res.status(400).send("Email already exists");
     return;
   } else {
