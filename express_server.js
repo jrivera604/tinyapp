@@ -27,8 +27,8 @@ const users = {
 const getUserByEmail = (email) => {
   let emailArray = Object.values(users);
   //callback function to return truthy value for email
-  return emailArray.find(user => email === user.email)
-}
+  return emailArray.find(user => email === user.email);
+};
 const generateRandomString = () => {
   let shortUrl = [];
   let characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -54,16 +54,27 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
-
-
+//login page route
 app.get("/login", (req, res) => {
-  res.render("login");
+  let  user = users[req.cookies["user_id"]];
+  const templateVars = { id: req.params.id, longURL: urlDatabase, user: user};
+  res.render("login", templateVars);
 });
+
 //post login route
 app.post("/login" , (req, res) => {
-  res.cookie("user_id", req.body.username);
+  const email = req.body.email;
+  const password = req.body.password;
+  if (!getUserByEmail(email) || password !== getUserByEmail(email).password) {
+    res.status(403).send("Invalid email and/or password");
+    return;
+  }
+  
+  const userID = getUserByEmail(email).id;
+  res.cookie("user_id", userID);
   res.redirect("/urls");
 });
+
 //post logout route
 app.post("/logout", (req, res) => {
   res.clearCookie("user_id");
@@ -72,27 +83,27 @@ app.post("/logout", (req, res) => {
 
 //register route
 app.get("/register", (req, res) => {
-  res.render("register");
+  let user = users[req.cookies["user_id"]];
+  const templateVars =  {id: req.params.id, longURL: urlDatabase, user: user};
+  res.render("register", templateVars);
 });
 
+//register post route
 app.post("/register", (req, res) => {
   let id = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
-  if(email.length === 0 || password.length === 0){
+  if (email.length === 0 || password.length === 0) {
     res.status(400).send("Invalid email and/or password");
     return;
-  }
-  else if (getUserByEmail(email)) {
+  } else if (getUserByEmail(email)) {
     res.status(400).send("Email already exists");
     return;
-  }
-
-  else {
+  } else {
   
-  users[id] = {id: id, email: email, password: password};
-  res.cookie("user_id", id);
-  res.redirect("/urls");
+    users[id] = {id: id, email: email, password: password};
+    res.cookie("user_id", id);
+    res.redirect("/urls");
   }
 });
 //shortURL route
